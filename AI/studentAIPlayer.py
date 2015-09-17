@@ -45,9 +45,42 @@ class AIPlayer(Player):
     ##
     def updatedState(self, currentState, move):
         stateCopy = currentState.fastclone()
+        ourInventory = getCurrPlayerInventory(stateCopy)
+        enemyAntList = getAntList(stateCopy, self.playerId - 1, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
+        #part a
         if(move.moveType == BUILD):
-            ourInventory = getCurrPlayerInventory(stateCopy)
             ourInventory.ants.append(Ant(getConstrList(stateCopy, self.playerId, [(ANTHILL)]), move.buildType, self.playerId))
+            #part f
+            if(ant.type == SOLDIER):
+                ourInventory.foodCount -= 3
+            elif(ant.type == DRONE or ant.type == WORKER):
+                ourInventory.foodCount -= 1
+            elif(ant.type == R_SOLDIER)
+                ourInventory.foodCount -= 2
+        #part b
+        if(move.moveType == MOVE_ANT):
+            ant = getAntAt(stateCopy, move.coordList[0])
+            newSpot = move.coordList[len(move.coordList) - 1]
+            ant.coords = newSpot
+            #part d
+            adjacent = listAdjacent(ant.coords)
+            for x in range(0, len(adjacent)):
+                for y in range(0, len(enemyAntList)):
+                    if(adjacent[x] == enemyAntList[y].coords):
+                        attackedAnt = getAntAt(stateCopy, adjacent[x])
+                        attackedAnt.health -= 1
+                        if(attackedAnt.health <= 0):
+                            enemyAntList.remove(attackedAnt)
+            #part c
+            foodList = getConstrList(stateCopy, None, [(FOOD)])
+            for food in foodList:
+                if(ant.coords == food.coords and ant.carrying == False):
+                    ant.carrying = True
+            if(ant.coords == getConstrList(stateCopy, self.playerId, [(ANTHILL)])[0].coords and ant.carrying == True):
+                ant.carrying = False
+                ourInventory.foodCount += 1
+
+
 
 
 
