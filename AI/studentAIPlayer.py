@@ -44,19 +44,24 @@ class AIPlayer(Player):
     #   possibleState: A copy of currentState that has been altered to be a node
     ##
     def updatedState(self, currentState, move):
+        #get a working copy of the currentState so we dont mess with the actual state
         stateCopy = currentState.fastclone()
+        #get a reference to our inventory so that we can alter it
         ourInventory = getCurrPlayerInventory(stateCopy)
+        #get a reference to where the enemy ants are
         enemyAntList = getAntList(stateCopy, self.playerId - 1, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
+        ourWorkerList = getAntList(stateCopy, self.playerId, [(WORKER)])
+        ourDroneList = getAntList(stateCopy, self.playerId, [(DRONE)])
+
         #part a
-        if(move.moveType == BUILD):
-            ourInventory.ants.append(Ant(getConstrList(stateCopy, self.playerId, [(ANTHILL)]), move.buildType, self.playerId))
+        if(move.moveType == BUILD and (move.buildType == DRONE or move.buildType == WORKER)):
+            if(len(ourWorkerList) < 1 and move.buildType == WORKER):
+                ourInventory.ants.append(Ant(getConstrList(stateCopy, self.playerId, [(ANTHILL)]), move.buildType, self.playerId))
+            elif(len(ourDroneList) < 2 and move.buildType == DRONE):
+                ourInventory.ants.append(Ant(getConstrList(stateCopy, self.playerId, [(ANTHILL)]), move.buildType, self.playerId))
             #part f
-            if(ant.type == SOLDIER):
-                ourInventory.foodCount -= 3
-            elif(ant.type == DRONE or ant.type == WORKER):
-                ourInventory.foodCount -= 1
-            elif(ant.type == R_SOLDIER)
-                ourInventory.foodCount -= 2
+            ourInventory.foodCount -= 1
+
         #part b
         if(move.moveType == MOVE_ANT):
             ant = getAntAt(stateCopy, move.coordList[0])
@@ -70,7 +75,8 @@ class AIPlayer(Player):
                         attackedAnt = getAntAt(stateCopy, adjacent[x])
                         attackedAnt.health -= 1
                         if(attackedAnt.health <= 0):
-                            enemyAntList.remove(attackedAnt)
+                            if(attackedAnt.type != QUEEN):
+                                enemyAntList.remove(attackedAnt)
             #part c
             foodList = getConstrList(stateCopy, None, [(FOOD)])
             for food in foodList:
@@ -80,12 +86,54 @@ class AIPlayer(Player):
                 ant.carrying = False
                 ourInventory.foodCount += 1
 
+        #part e
+        return stateCopy
+
+    ##
+    #evalState
+    #Description: this method evaluates a Game State object and returns a value between 0.0 and 1.0
+    #based on how much our AI would be winning or losing in that state, with anythingn below 0.5 being losing
+    #and anything from 0.5 to 1.0 is winning
+    #
+    #Parameters: stateToEval
+    #
+    #returns a double that is the evaluation of the state
 
 
+    def evalState(self, stateToEval):
+        result = 0.5
+        ourInventory = getCurrPlayerInventory(stateToEval)
+        #get a reference to where the enemy ants are
+        enemyAntList = getAntList(stateToEval, self.playerId - 1, [(WORKER, DRONE, SOLDIER, R_SOLDIER)])
+        enemyQueen = getAntList(stateToEval, self.playerId - 1, [(QUEEN)])[0]
+        ourQueen = getAntList(stateToEval, self.playerId, [(QUEEN)])[0]
+        enemyQueenHealth = 4
+        ourAntList = getAntList(stateToEval, self.playerId, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
+        ourDroneList = getAntList(stateToEval, self.playerId, [(Drone)])
 
+        for ant in ourAntList:
+            if(ant.type == WORKER and ant.carrying == TRUE):
+                result += 0.025
+        if(len(ourAntList) > len(enemyAntList)):
+            result += 0.01
+        if(ourQueen.health >= enemyQueenHealth):
+            result += 0.1
+        else:
+            result -= 0.04
+        if(len(ourDroneList) < 2):
+            result -= .15
+        result += ((4-enemyQueenHealth) * 0.2)
+        result += (ourInventory.foodCount * 0.05)
+        if(ourInventory.foodCount == 11):
+            return 1
+        if(enemyQueen == None or enemyQueenHealth == 0):
+            return 1
+        if(ourQueen == None or ourQueen.health == 0):
+            return 0
+        if(stateToEval.inventories[self.playerId - 1].foodCount == 11):
+            return 0
 
-
-
+        return result
     ##
     #getPlacement
     #Description: The getPlacement method corresponds to the
@@ -108,7 +156,27 @@ class AIPlayer(Player):
     #       If setup phase 2: list of two 2-tuples of ints -> [(x1,y1), (x2,y2)]
     ##
     def getPlacement(self, currentState):
-       return None
+       if currentState.phase == SETUP_PHASE_1:
+           return [(4,1), (4,0), (9,3), (8,2), (7,3), (6,2), (5,3), (0,3), (3,3), (2,2), (1,3)]
+
+       #this else if is what sets up the food. it only lets us place 2 pieces
+       #of food
+       elif currentState.phase == SETUP_PHASE_2:
+           x = 0
+           y = 6
+           result = []
+           listToCheck = [4,5,3,6,2,7,1,8,0,9]
+
+           for y in [6,7]:
+
+               for num in listToCheck:
+                   if(getConstrAt(currentState, (num, y)) == None):
+                       result.append((num, y))
+                       if(len(result)== 2):
+                           return result
+
+       else:
+           return None
 
     ##
     #getMove
@@ -131,8 +199,17 @@ class AIPlayer(Player):
     #Return: Move(moveType [int], coordList [list of 2-tuples of ints], buildType [int]
     ##
     def getMove(self, currentState):
-        return None
-
+        moveList = listAllLegalMoves(currentState)
+        statesToEval = []
+        evaluatedStates = []
+        bestStateIndex = 0
+        for move in moveList:
+            statesToSearch.append(self.updatedState(currentState))
+        for state in statesToEval:
+            evaluatedStates.append(self.evalState(state))
+        for i in range(0, len(evaluatedStates)):
+            if(evaluatedStates[i] > bestStateIndex):
+                lowest = i
     ##
     #getAttack
     #Description: The getAttack method is called on the player whenever an ant completes
