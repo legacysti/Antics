@@ -7,6 +7,7 @@ from Ant import UNIT_STATS
 from Move import Move
 from GameState import addCoords
 from AIPlayerUtils import *
+from Ant import *
 
 
 ##
@@ -109,11 +110,11 @@ class AIPlayer(Player):
         ourQueen = getAntList(stateToEval, self.playerId, [(QUEEN)])[0]
         enemyQueenHealth = 4
         ourAntList = getAntList(stateToEval, self.playerId, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
-        ourDroneList = getAntList(stateToEval, self.playerId, [(Drone)])
+        ourDroneList = getAntList(stateToEval, self.playerId, [(DRONE)])
 
         for ant in ourAntList:
             if(ant.type == WORKER and ant.carrying == TRUE):
-                result += 0.025
+                result += 0.15
         if(len(ourAntList) > len(enemyAntList)):
             result += 0.01
         if(ourQueen.health >= enemyQueenHealth):
@@ -162,8 +163,7 @@ class AIPlayer(Player):
        #this else if is what sets up the food. it only lets us place 2 pieces
        #of food
        elif currentState.phase == SETUP_PHASE_2:
-           x = 0
-           y = 6
+
            result = []
            listToCheck = [4,5,3,6,2,7,1,8,0,9]
 
@@ -203,13 +203,16 @@ class AIPlayer(Player):
         statesToEval = []
         evaluatedStates = []
         bestStateIndex = 0
+
         for move in moveList:
-            statesToSearch.append(self.updatedState(currentState))
+            statesToEval.append(self.updatedState(currentState, move))
         for state in statesToEval:
             evaluatedStates.append(self.evalState(state))
-        for i in range(0, len(evaluatedStates)):
-            if(evaluatedStates[i] > bestStateIndex):
-                lowest = i
+        for index in range(0, len(evaluatedStates)):
+            if(evaluatedStates[index] >= bestStateIndex):
+                bestStateIndex = index
+
+        return moveList[bestStateIndex]
     ##
     #getAttack
     #Description: The getAttack method is called on the player whenever an ant completes
