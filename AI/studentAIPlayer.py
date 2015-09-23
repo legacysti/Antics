@@ -111,20 +111,39 @@ class AIPlayer(Player):
         enemyQueenHealth = 4
         ourAntList = getAntList(stateToEval, self.playerId, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
         ourDroneList = getAntList(stateToEval, self.playerId, [(DRONE)])
-
+        #part e
         for ant in ourAntList:
             if(ant.type == WORKER and ant.carrying == TRUE):
                 result += 0.15
+        for theirAnt in enemyAntList:
+            if(thierAnt.type == WORKER and theirAnt.carrying == TRUE):
+                result -= 0.15
+        #part a
         if(len(ourAntList) > len(enemyAntList)):
-            result += 0.01
+            result += 0.1
+        else:
+            result += 0.1
+        #part c
         if(ourQueen.health >= enemyQueenHealth):
             result += 0.1
         else:
-            result -= 0.04
+            result -= 0.2
+        #part b
         if(len(ourDroneList) < 2):
             result -= .15
-        result += ((4-enemyQueenHealth) * 0.2)
-        result += (ourInventory.foodCount * 0.05)
+
+        result += ((4-enemyQueenHealth) * 0.15)
+        #result += (ourInventory.foodCount * 0.05)
+        if(ourInventory.foodCount - stateToEval.inventories[self.playerId - 1].foodCount > 0)
+            result += .15
+        else:
+            result -= .15
+        #check result to be less than 1
+        if(result >= 1)
+            return .95
+        else:
+            return result
+
         if(ourInventory.foodCount == 11):
             return 1
         if(enemyQueen == None or enemyQueenHealth == 0):
