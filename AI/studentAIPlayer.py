@@ -8,10 +8,14 @@ from Move import Move
 from GameState import addCoords
 from AIPlayerUtils import *
 from Ant import *
+<<<<<<< HEAD
 from Location import *
 from Game import *
 from Move import *
 
+=======
+from random import randrange
+>>>>>>> master
 
 ##
 #AIPlayer
@@ -116,24 +120,67 @@ class AIPlayer(Player):
         ourAnthill = ourInventory.getAnthill()
         ourFoodCount = ourInventory.foodCount
 
+        foodList = getConstrList(stateToEval, None, ([FOOD]))
+        foodListCoords = []
+        for food in foodList:
+            foodListCoords.append(food.coords)
+        closestFood = None
+
+
         enemyInventory = stateToEval.inventories[self.playerId - 1]
         enemyAntList = enemyInventory.ants
         enemyTunnel = enemyInventory.getTunnels()
         enemyAnthill = enemyInventory.getAnthill()
         enemyFoodCount = enemyInventory.foodCount
         enemyQueen = enemyInventory.getQueen()
-        
 
+        #we add the difference between the number of ants we have and
+        #multiply by 0.01. If we have more ants, we will be in a (more)
+        #winning state and the number we add to result will be positive
+        #If we have less ants then them, we are in a less winning state
+        #and the number we add to result will be negative
+        result += ((len(ourAntList) - len(enemyAntList)) * 0.01)
+
+        if(len(ourDroneList) < 2):
+            result -= (0.1 * (2 - len(ourDroneList)))
+        else:
+            result += 0.1
+        #loop through all our ants and reward the workers for
+        #carrying food
         for ant in ourAntList:
             if(ant.type == DRONE):
                 ourDroneList.append(ant)
             if(ant.type == WORKER):
                 ourWorkerList.append(ant)
+
+            if(ant.type == WORKER and ant.carrying == False):
+
+                steps = 100
+                for f in foodList:
+                    temp = stepsToReach(stateToEval, ant.coords, f.coords)
+                    if(temp < steps):
+                        steps = temp
+                        closestFood = f.coords
+                if((stepsToReach(stateToEval, ant.coords, closestFood) == 0)):
+                    result += 0.2
+                else:
+                    result -= (stepsToReach(stateToEval, ant.coords, closestFood) * 0.02)
+
             if(ant.type == WORKER and ant.carrying == True):
-                if(ant.coords == ourTunnel.coords or ant.coords == ourAnthill.coords):
-                    result += 0.15
+                result -= (stepsToReach(stateToEval, ant.coords, ourTunnel[0].coords) * 0.01)
+            elif(ant.type == WORKER and ant.carrying == True and ant.coords == ourAnthill.coords):
+                result += 0.2
+            elif(ant.type == WORKER and ant.carrying == True and (ant.coords == ourAnthill.coords or ant.coords == ourTunnel[0].coords)):
+                result += 0.2
 
 
+            elif(ant.carrying == False and ant.type == WORKER and (ant.coords in foodListCoords)):
+                result += 0.11
+
+            elif(ant.type == DRONE):
+                result -= (stepsToReach(stateToEval, ant.coords, enemyQueen.coords) * 0.01)
+
+        result += random.uniform(-0.001, 0.001)
         return result
     ##
     #getPlacement
@@ -211,7 +258,7 @@ class AIPlayer(Player):
 
         for index in range(0, len(evaluatedStates)):
             bestStateScore = evaluatedStates[index]
-            print "State at index %d is %f" % (index, bestStateScore)
+            
             if(evaluatedStates[index] > evaluatedStates[bestStateIndex]):
                 bestStateIndex = index
                 bestStateScore = evaluatedStates[index]
