@@ -8,6 +8,9 @@ from Move import Move
 from GameState import addCoords
 from AIPlayerUtils import *
 from Ant import *
+from Location import *
+from Game import *
+from Move import *
 
 
 ##
@@ -110,7 +113,7 @@ class AIPlayer(Player):
         ourWorkerList = []
         ourQueen = getCurrPlayerInventory(stateToEval).getQueen()
         ourTunnel = ourInventory.getTunnels()
-        ourAnthill = ourInventory.getAntHill()
+        ourAnthill = ourInventory.getAnthill()
         ourFoodCount = ourInventory.foodCount
 
         enemyInventory = stateToEval.inventories[self.playerId - 1]
@@ -250,4 +253,16 @@ class AIPlayer(Player):
         #method templaste, not implemented
         pass
 
+#UnitTest
+board = [[Location((col, row)) for row in xrange(0,BOARD_LENGTH)] for col in xrange(0,BOARD_LENGTH)]
+p1Inventory = Inventory(PLAYER_ONE, [], [], 0)
+p2Inventory = Inventory(PLAYER_TWO, [], [], 0)
+neutralInventory = Inventory(NEUTRAL, [], [], 0)
+phase = MENU_PHASE
+turn = PLAYER_ONE
 
+aGameState = (board, (p1Inventory, p2Inventory, neutralInventory, phase, turn)
+allMoves = listAllLegalMoves(aGameState)
+allMoves[0]
+somePlayer = AIPlayer(PLAYER_ONE)
+updatedState(aGameState, allMoves[0])
