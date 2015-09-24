@@ -28,7 +28,7 @@ class AIPlayer(Player):
     #   inputPlayerId - The id to give the new player (int)
     ##
     def __init__(self, inputPlayerId):
-        super(AIPlayer,self).__init__(inputPlayerId, "AI Template (not implemented)")
+        super(AIPlayer,self).__init__(inputPlayerId, "Will Not Work ong16pierson16")
 
 
 
@@ -103,55 +103,33 @@ class AIPlayer(Player):
 
     def evalState(self, stateToEval):
         result = 0.5
+
         ourInventory = getCurrPlayerInventory(stateToEval)
-        #get a reference to where the enemy ants are
-        enemyAntList = getAntList(stateToEval, self.playerId - 1, [(WORKER, DRONE, SOLDIER, R_SOLDIER)])
-        enemyQueen = getAntList(stateToEval, self.playerId - 1, [(QUEEN)])[0]
-        ourQueen = getAntList(stateToEval, self.playerId, [(QUEEN)])[0]
-        enemyQueenHealth = 4
-        ourAntList = getAntList(stateToEval, self.playerId, [(QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER)])
-        ourDroneList = getAntList(stateToEval, self.playerId, [(DRONE)])
-        #part e
+        ourAntList = ourInventory.ants
+        ourDroneList = []
+        ourWorkerList = []
+        ourQueen = getCurrPlayerInventory(stateToEval).getQueen()
+        ourTunnel = ourInventory.getTunnels()
+        ourAnthill = ourInventory.getAntHill()
+        ourFoodCount = ourInventory.foodCount
+
+        enemyInventory = stateToEval.inventories[self.playerId - 1]
+        enemyAntList = enemyInventory.ants
+        enemyTunnel = enemyInventory.getTunnels()
+        enemyAnthill = enemyInventory.getAnthill()
+        enemyFoodCount = enemyInventory.foodCount
+        enemyQueen = enemyInventory.getQueen()
+        
+
         for ant in ourAntList:
-            if(ant.type == WORKER and ant.carrying == TRUE):
-                result += 0.15
-        for theirAnt in enemyAntList:
-            if(thierAnt.type == WORKER and theirAnt.carrying == TRUE):
-                result -= 0.15
-        #part a
-        if(len(ourAntList) > len(enemyAntList)):
-            result += 0.1
-        else:
-            result += 0.1
-        #part c
-        if(ourQueen.health >= enemyQueenHealth):
-            result += 0.1
-        else:
-            result -= 0.2
-        #part b
-        if(len(ourDroneList) < 2):
-            result -= .15
+            if(ant.type == DRONE):
+                ourDroneList.append(ant)
+            if(ant.type == WORKER):
+                ourWorkerList.append(ant)
+            if(ant.type == WORKER and ant.carrying == True):
+                if(ant.coords == ourTunnel.coords or ant.coords == ourAnthill.coords):
+                    result += 0.15
 
-        result += ((4-enemyQueenHealth) * 0.15)
-        #result += (ourInventory.foodCount * 0.05)
-        if(ourInventory.foodCount - stateToEval.inventories[self.playerId - 1].foodCount > 0)
-            result += .15
-        else:
-            result -= .15
-        #check result to be less than 1
-        if(result >= 1)
-            return .95
-        else:
-            return result
-
-        if(ourInventory.foodCount == 11):
-            return 1
-        if(enemyQueen == None or enemyQueenHealth == 0):
-            return 1
-        if(ourQueen == None or ourQueen.health == 0):
-            return 0
-        if(stateToEval.inventories[self.playerId - 1].foodCount == 11):
-            return 0
 
         return result
     ##
@@ -222,14 +200,19 @@ class AIPlayer(Player):
         statesToEval = []
         evaluatedStates = []
         bestStateIndex = 0
-
+        bestStateScore = 0.0
         for move in moveList:
             statesToEval.append(self.updatedState(currentState, move))
         for state in statesToEval:
             evaluatedStates.append(self.evalState(state))
+
         for index in range(0, len(evaluatedStates)):
-            if(evaluatedStates[index] >= bestStateIndex):
+            bestStateScore = evaluatedStates[index]
+            print "State at index %d is %f" % (index, bestStateScore)
+            if(evaluatedStates[index] > evaluatedStates[bestStateIndex]):
                 bestStateIndex = index
+                bestStateScore = evaluatedStates[index]
+
 
         return moveList[bestStateIndex]
     ##
@@ -252,7 +235,7 @@ class AIPlayer(Player):
     #Return: A coordinate that matches one of the entries of enemyLocations. ((int,int))
     ##
     def getAttack(self, currentState, attackingAnt, enemyLocations):
-        return None
+        return enemyLocations[0]
 
     ##
     #registerWin
@@ -266,3 +249,5 @@ class AIPlayer(Player):
     def registerWin(self, hasWon):
         #method templaste, not implemented
         pass
+
+
