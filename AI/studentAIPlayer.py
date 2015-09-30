@@ -8,14 +8,10 @@ from Move import Move
 from GameState import addCoords
 from AIPlayerUtils import *
 from Ant import *
-<<<<<<< HEAD
 from Location import *
 from Game import *
 from Move import *
-
-=======
 from random import randrange
->>>>>>> master
 
 ##
 #AIPlayer
@@ -258,7 +254,7 @@ class AIPlayer(Player):
 
         for index in range(0, len(evaluatedStates)):
             bestStateScore = evaluatedStates[index]
-            
+
             if(evaluatedStates[index] > evaluatedStates[bestStateIndex]):
                 bestStateIndex = index
                 bestStateScore = evaluatedStates[index]
@@ -301,15 +297,17 @@ class AIPlayer(Player):
         pass
 
 #UnitTest
-board = [[Location((col, row)) for row in xrange(0,BOARD_LENGTH)] for col in xrange(0,BOARD_LENGTH)]
-p1Inventory = Inventory(PLAYER_ONE, [], [], 0)
-p2Inventory = Inventory(PLAYER_TWO, [], [], 0)
-neutralInventory = Inventory(NEUTRAL, [], [], 0)
-phase = MENU_PHASE
-turn = PLAYER_ONE
-
-aGameState = (board, (p1Inventory, p2Inventory, neutralInventory, phase, turn)
-allMoves = listAllLegalMoves(aGameState)
-allMoves[0]
-somePlayer = AIPlayer(PLAYER_ONE)
-updatedState(aGameState, allMoves[0])
+# board = [[Location((col, row)) for row in xrange(0,BOARD_LENGTH)] for col in xrange(0,BOARD_LENGTH)]
+# p1Inventory = Inventory(PLAYER_ONE, [], [], 0)
+# p2Inventory = Inventory(PLAYER_TWO, [], [], 0)
+# neutralInventory = Inventory(NEUTRAL, [], [], 0)
+# phase = MENU_PHASE
+# turn = PLAYER_ONE
+#
+# aGameState = (board, (p1Inventory, p2Inventory, neutralInventory), phase, turn)
+# p1Inventory.ants.append(Ant((2,2), QUEEN, PLAYER_ONE))
+# p2Inventory.ants.append(Ant(()))
+# aMoves =
+# allMoves[0]
+# somePlayer = AIPlayer(PLAYER_ONE)
+# updatedState(aGameState, allMoves[0])
